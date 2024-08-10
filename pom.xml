@@ -18,20 +18,22 @@
     </developers>
 
     <properties>
+        <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <jakarta.validation-api.version>3.1.0</jakarta.validation-api.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <jakarta.validation-api.version>3.0.2</jakarta.validation-api.version>
         <junit-jupiter.version>5.10.3</junit-jupiter.version>
         <mockito-junit-jupiter.version>5.12.0</mockito-junit-jupiter.version>
         <mockito-inline.version>5.2.0</mockito-inline.version>
-        <jackson-databind.version>2.17.2</jackson-databind.version>
+        <jackson-databind.version>2.17.0</jackson-databind.version>
         <bcpkix-jdk18on.version>1.78.1</bcpkix-jdk18on.version>
         <nimbus-jose-jwt.version>9.40</nimbus-jose-jwt.version>
         <commons-io.version>2.16.1</commons-io.version>
         <commons-lang3.version>3.16.0</commons-lang3.version>
-        <sl4j-api.version>2.0.15</sl4j-api.version>
+        <sl4j-api.version>2.0.9</sl4j-api.version>
         <logback-classic.version>1.5.6</logback-classic.version>
+        <maven-pmd-plugin.version>3.24.0</maven-pmd-plugin.version>
     </properties>
 
     <dependencies>
@@ -125,7 +127,34 @@
             <scope>test</scope>
             <version>${logback-classic.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>24.1.0</version>
+            <scope>compile</scope>
+        </dependency>
 
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>${maven-pmd-plugin.version}</version>
+                <configuration>
+                    <sourceEncoding>${project.build.sourceEncoding}</sourceEncoding>
+                    <minimumTokens>100</minimumTokens>
+                    <targetJdk>${java.version}</targetJdk>
+                    <analysisCache>true</analysisCache>
+                    <linkXRef>false</linkXRef>
+                    <rulesets>
+                        <ruleset>${project.basedir}/qa/pmd/pmd-ruleset.xml</ruleset>
+                    </rulesets>
+                    <failOnViolation>true</failOnViolation>
+                    <printFailingErrors>true</printFailingErrors>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

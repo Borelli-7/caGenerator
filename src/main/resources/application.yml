@@ -1,0 +1,19 @@
+server:
+  # Authorization HTTP header requires to enlarge max header size.
+  max-http-request-header-size: 65000
+  port: 8092
+
+spring:
+  jackson:
+    serialization:
+      write_dates_as_timestamps: false
+
+qwac:
+  certificate-generator:
+    template:
+      public:
+        key:
+          "certificates/MyRootCA.key"
+      private:
+        key:
+          "certificates/MyRootCA.pem"

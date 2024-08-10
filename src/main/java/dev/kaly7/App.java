@@ -1,12 +1,10 @@
 package dev.kaly7;
 
-import java.io.IOException;
-
 public class App {
-    //private static final Logger logger = LoggerFactory.getLogger(CertificateService.class);
+    //private static final Logger logger = LoggerFactory.getLogger(App.class);
     public static void main(String[] args) {
-/*        final int ARGS_SIZE = 1;
-        try {
+        //final int ARGS_SIZE = 1;
+/*        try {
             // Check if the required arguments are provided
             if (args.length < ARGS_SIZE) {
                 logger.info("Usage: java App <path/to/yourTppFile.json> [--target_folder <target_folder>]");
