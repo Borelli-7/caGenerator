@@ -72,21 +72,15 @@ public class CertificateServiceImpl implements CertificateService {
             }
     };
 
-    Function<String, InputStream> getInputStream = (tppJsonFilePath)-> {
-        InputStream inputStream = Thread.currentThread().getContextClassLoader()
-                .getResourceAsStream(Paths.get(tppJsonFilePath)
-                        .getFileName().toString());
-
-        if (inputStream == null) {
-            try {
-                throw new IOException("Json file not found");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+    Function<String, InputStream> getInputStream = (tppJsonFilePath) -> {
+        Path path = Paths.get(tppJsonFilePath);
+        try {
+            return Files.newInputStream(path);
+        } catch (IOException e) {
+            throw new RuntimeException("File not found or unable to open: " + tppJsonFilePath, e);
         }
-
-        return inputStream;
     };
+
 
     public void saveCertificateAsPem(String targetFolder, String certificate, String pemFileName) throws IOException {
         Path targetPath = Paths.get(targetFolder);
