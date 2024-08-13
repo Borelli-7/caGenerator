@@ -145,6 +145,19 @@ public class CertificateServiceImpl implements CertificateService {
         }
     }
 
+    /**
+     * Generates PEM files for certificates based on the provided JSON file and saves them to the specified target folder.
+     *
+     * <p>This method performs the following steps:
+     * <ol>
+     *   <li>Validates the input parameters: `tppJsonFilePath` and `targetFolder`. If either of these is invalid, an error is logged, and the method returns.</li>
+     *   <li>Attempts to process the JSON file located at `tppJsonFilePath`. This involves opening the file, parsing it into a `CertificateRequest`, generating a `CertificateResponse`, and saving the result as PEM files.</li>
+     *   <li>Logs the status of the operation, including whether the certificate generation was successful or if an error occurred during the process.</li>
+     * </ol>
+     *
+     * @param tppJsonFilePath the path to the JSON file containing the certificate data. This cannot be null or empty. If invalid, an error will be logged.
+     * @param targetFolder the directory path where the generated PEM files will be saved. This cannot be null or empty. If invalid, an error will be logged.
+     */
     @Override
     public void generatePemFilesCerts(String tppJsonFilePath, String targetFolder) {
         validateInputs.apply(tppJsonFilePath, targetFolder)
