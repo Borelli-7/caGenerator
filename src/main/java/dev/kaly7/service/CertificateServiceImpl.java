@@ -1,5 +1,6 @@
 package dev.kaly7.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.kaly7.exception.CertificateGeneratorException;
 import dev.kaly7.model.*;
@@ -22,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
@@ -51,7 +53,12 @@ public class CertificateServiceImpl implements CertificateService {
         return new IssuerDataService(keysProvider);
     };
 
-    private IssuerDataService issuerDataService = getIssuerDataService.get();
+    private IssuerDataService issuerDataService;
+
+    {
+        getIssuerDataService.get();
+    }
+
     private final Logger logger = LoggerFactory.getLogger(CertificateServiceImpl.class);
 
     public CertificateServiceImpl() {
@@ -59,31 +66,57 @@ public class CertificateServiceImpl implements CertificateService {
         this.issuerDataService = new IssuerDataService(keysProvider);
     }
 
-    public CertificateServiceImpl(Logger logger) {
-    }
+    Function<List<InputStream>, List<CertificateRequest>>  parseJsonFile = (jsonFileStreams)-> {
 
-    Function<InputStream, CertificateRequest>  parseJsonFile = (jsonFileStream)-> {
-
-            ObjectMapper objectMapper = new ObjectMapper();
-            try {
-                return objectMapper.readValue(jsonFileStream, CertificateRequest.class);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+        List<CertificateRequest> certificateRequests = new ArrayList<>();
+        ObjectMapper objectMapper = new ObjectMapper();
+        jsonFileStreams.forEach( jsonFileStream ->
+                {
+                    try {
+                        certificateRequests.add(objectMapper.readValue(jsonFileStream, CertificateRequest.class));
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+        );
+        return certificateRequests;
     };
 
-    Function<String, InputStream> getInputStream = (tppJsonFilePath) -> {
+
+    Function<String, List<InputStream>> getInputStreams = (tppJsonFilePath) -> {
+        List<InputStream> inputStreams = new ArrayList<>();
         Path path = Paths.get(tppJsonFilePath);
         try {
-            return Files.newInputStream(path);
+            // Read the JSON file
+            String jsonContent = new String(Files.readAllBytes(path));
+
+            // Parse JSON
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode jsonArray = objectMapper.readTree(jsonContent);
+
+            // Create InputStreams for each JSON object
+            for (JsonNode jsonNode : jsonArray) {
+                // Convert JSON node to string and then to InputStream
+                String jsonString = jsonNode.toString();
+                InputStream inputStream = new ByteArrayInputStream(jsonString.getBytes());
+                inputStreams.add(inputStream);
+            }
+
         } catch (IOException e) {
-            throw new RuntimeException("File not found or unable to open: " + tppJsonFilePath, e);
+            throw new RuntimeException("Json File not found or unable to read: " + tppJsonFilePath, e);
         }
+        return inputStreams;
     };
 
 
-    public void saveCertificateAsPem(String targetFolder, String certificate, String pemFileName) throws IOException {
-        Path targetPath = Paths.get(targetFolder);
+    private void saveCertificateAsPem(String targetFolder, String certificate, String pemFileName, String tppUnit) throws IOException {
+        StringBuilder tppFolder = new StringBuilder(targetFolder);
+        Path targetPath;
+        if (targetFolder.endsWith("/")) {
+            targetPath = Paths.get(tppFolder.append(tppUnit).toString());
+        }else {
+            targetPath = Paths.get(tppFolder.append("/").append(tppUnit).toString());
+        }
         createDirectories(targetPath);
 
         Path filepath = targetPath.resolve(pemFileName);
@@ -120,30 +153,43 @@ public class CertificateServiceImpl implements CertificateService {
         }
     }
 
-    public void savePemFiles(String targetFolder, CertificateResponse response, String authNumber) {
-        saveToFile(
-                authNumber + "-encodedCert.pem",
-                certFileName -> logAndSave(targetFolder, certFileName, response::encodedCert)
-        );
+    private void savePemFiles(String targetFolder, List<CertificateResponse> responses, List<String> authNumbers) {
 
-        saveToFile(
-                authNumber + "-privateKey.key",
-                keyFileName -> logAndSave(targetFolder, keyFileName, response::privateKey)
-        );
+        int i = 0;
+        while (i < responses.size()) {
+
+            CertificateResponse finalResponse = responses.get(i);
+            String authNumber = authNumbers.get(i);
+            saveToFile(
+                    authNumber+"-encodedCert.pem",
+                    certFileName -> logAndSave(targetFolder, certFileName, finalResponse::encodedCert, authNumber)
+            );
+
+            saveToFile(
+                    authNumber+"-privateKey.key",
+                    keyFileName -> logAndSave(targetFolder, keyFileName, finalResponse::privateKey, authNumber)
+            );
+            i++;
+        }
     }
 
     private void saveToFile(String fileName, Consumer<String> fileSaver) {
         fileSaver.accept(fileName);
     }
 
-    private void logAndSave(String targetFolder, String fileName, Supplier<String> contentSupplier) {
+    private void logAndSave(String targetFolder, String fileName, Supplier<String> contentSupplier, String tppUnit) {
         try {
             logger.info("Saving file to: {}", fileName);
-            saveCertificateAsPem(targetFolder, contentSupplier.get(), fileName);
+            saveCertificateAsPem(targetFolder, contentSupplier.get(), fileName, tppUnit);
         } catch (IOException e) {
             logger.error("Error saving file: {}", fileName, e);
         }
     }
+
+    private final Function<List<CertificateRequest>, List<String>> getAuthorizationNumbers = (requests) ->
+            requests.stream()
+                    .map(CertificateRequest::authorizationNumber)
+                    .toList();
 
     /**
      * Generates PEM files for certificates based on the provided JSON file and saves them to the specified target folder.
@@ -162,10 +208,10 @@ public class CertificateServiceImpl implements CertificateService {
     public void generatePemFilesCerts(String tppJsonFilePath, String targetFolder) {
         validateInputs.apply(tppJsonFilePath, targetFolder)
                 .flatMap(path -> handleFile(
-                        () -> getInputStream.apply(path),
-                        jsonFileStream -> parseJsonFile.apply(jsonFileStream),
-                        request -> generateCertificate.apply(request),
-                        (response, authNumber) -> savePemFiles(targetFolder, response, authNumber)
+                        () -> getInputStreams.apply(path),
+                        jsonFileStreams -> parseJsonFile.apply(jsonFileStreams),
+                        requests -> generateCertificate.apply(requests),
+                        (responses, requests) -> savePemFiles(targetFolder, responses, getAuthorizationNumbers.apply(requests))
                 ))
                 .ifPresentOrElse(
                         success -> logger.info("Certificate generation completed successfully."),
@@ -186,30 +232,26 @@ public class CertificateServiceImpl implements CertificateService {
     };
 
     private <T> Optional<T> handleFile(
-            Supplier<InputStream> inputStreamSupplier,
-            Function<InputStream, CertificateRequest> jsonParser,
-            Function<CertificateRequest, CertificateResponse> certGenerator,
-            BiConsumer<CertificateResponse, String> pemSaver) {
-        try (InputStream jsonFileStream = inputStreamSupplier.get()) {
-            if (jsonFileStream == null) {
-                logger.error("TPP JSON file not found.");
-                return Optional.empty();
-            }
-
-            CertificateRequest request = jsonParser.apply(jsonFileStream);
-            CertificateResponse response = certGenerator.apply(request);
-
-            logger.info("Certificate generated successfully");
-            pemSaver.accept(response,request.authorizationNumber());
-
-            return Optional.of((T) response);
-        } catch (IOException e) {
-            logger.error("Error reading the JSON file: {}", e.getMessage());
+            Supplier<List<InputStream>> inputStreamSuppliers,
+            Function<List<InputStream>, List<CertificateRequest>> jsonParsers,
+            Function<List<CertificateRequest>, List<CertificateResponse>> certGenerator,
+            BiConsumer<List<CertificateResponse>, List<CertificateRequest>> pemSaver) {
+        List<InputStream> jsonFileStreams = inputStreamSuppliers.get();
+        if (jsonFileStreams.isEmpty()) {
+            logger.error("TPP JSON file not found.");
             return Optional.empty();
         }
+
+        List<CertificateRequest> requests = jsonParsers.apply(jsonFileStreams);
+        List<CertificateResponse> responses = certGenerator.apply(requests);
+
+        logger.info("Certificate generated successfully");
+        pemSaver.accept(responses, requests);
+
+        return Optional.of((T) responses);
     }
 
-    protected Supplier<KeyPair> generateKeyPair = ()->{
+    private final Supplier<KeyPair> generateKeyPair = ()->{
         try {
             KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
             keyGen.initialize(2048, SecureRandom.getInstance("SHA1PRNG", "SUN"));
@@ -350,14 +392,6 @@ public class CertificateServiceImpl implements CertificateService {
      * <p>If an exception occurs during the certificate generation process, it is wrapped and re-thrown as a
      * {@link CertificateGeneratorException} with a descriptive message.</p>
      *
-     * @param subjectData The {@link SubjectData} containing information about the subject, including public key,
-     *                    start and end dates, and OCSP check requirements.
-     * @param statement The {@link QCStatement} to be included as an extension in the certificate.
-     *
-     * @return An {@link X509Certificate} generated from the provided subject data and QC statement.
-     *
-     * @throws CertificateGeneratorException If an error occurs during the certificate generation process.
-     *
      * @see IssuerData
      * @see ContentSigner
      * @see X509v3CertificateBuilder
@@ -418,16 +452,19 @@ public class CertificateServiceImpl implements CertificateService {
      * @see X509Certificate
      * @see ExportUtil
      *
-     * @return A {@link Function} that takes a {@link CertificateRequest} and returns a {@link CertificateResponse}.
      */
-    public Function<CertificateRequest, CertificateResponse> generateCertificate = (certificateRequest)-> {
-        SubjectData subjectData = generateSubjectData.apply(certificateRequest);
-        QCStatement qcStatement = generateQcStatement.apply(certificateRequest);
-
-        X509Certificate cert = generateX509Certificate.apply(subjectData, qcStatement);
-
-        return new CertificateResponse(ExportUtil.exportToString().apply(cert), ExportUtil.exportToString().apply(subjectData.privateKey()));
-    };
+    public Function<List<CertificateRequest>, List<CertificateResponse>> generateCertificate = certificateRequests->
+        certificateRequests.stream()
+                .map(certificateRequest -> {
+                    SubjectData subjectData = generateSubjectData.apply(certificateRequest);
+                    QCStatement qcStatement = generateQcStatement.apply(certificateRequest);
+                    X509Certificate cert = generateX509Certificate.apply(subjectData, qcStatement);
+                    return new CertificateResponse(
+                            ExportUtil.exportToString().apply(cert),
+                            ExportUtil.exportToString().apply(subjectData.privateKey())
+                    );
+                })
+                .toList();
 
 
     private ContentSigner createContentSigner(IssuerData issuerData) throws OperatorCreationException {
