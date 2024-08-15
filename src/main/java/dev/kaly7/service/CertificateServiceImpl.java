@@ -59,9 +59,6 @@ public class CertificateServiceImpl implements CertificateService {
         this.issuerDataService = new IssuerDataService(keysProvider);
     }
 
-    public CertificateServiceImpl(Logger logger) {
-    }
-
     Function<InputStream, CertificateRequest>  parseJsonFile = (jsonFileStream)-> {
 
             ObjectMapper objectMapper = new ObjectMapper();
