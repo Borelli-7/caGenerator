@@ -1,0 +1,67 @@
+[
+    {
+        "authorizationNumber": "PSDAT-FAKENCA-87B2AC1",
+        "roles": [
+            "PISP"
+        ],
+        "organizationName": "Fictional Corporation AG",
+        "organizationUnit": "Information Technology",
+        "domainComponent": "public.corporation.de",
+        "localityName": "Nuremberg",
+        "stateOrProvinceName": "Bayern",
+        "countryCode": "AT",
+        "validity": -265,
+        "commonName": "Fake NCA My project",
+        "ocspCheckNeeded": false
+    },
+    {
+        "authorizationNumber": "PSDAT-FAKENCA-87B2AC2",
+        "roles": [
+            "PISP",
+            "AISP"
+        ],
+        "organizationName": "Fictional Corporation AG",
+        "organizationUnit": "Information Technology",
+        "domainComponent": "public.corporation.de",
+        "localityName": "Nuremberg",
+        "stateOrProvinceName": "Bayern",
+        "countryCode": "DE",
+        "validity": -265,
+        "commonName": "Fake NCA My project",
+        "ocspCheckNeeded": false
+    },
+    {
+        "authorizationNumber": "PSDAT-FAKENCA-87B2AC3",
+        "roles": [
+            "PISP",
+            "AISP",
+            "PIISP"
+        ],
+        "organizationName": "Fictional Corporation AG",
+        "organizationUnit": "Information Technology",
+        "domainComponent": "public.corporation.de",
+        "localityName": "Nuremberg",
+        "stateOrProvinceName": "Bayern",
+        "countryCode": "AU",
+        "validity": -265,
+        "commonName": "Fake NCA My project",
+        "ocspCheckNeeded": false
+    },
+    {
+        "authorizationNumber": "PSDAT-FAKENCA-87B2AC4",
+        "roles": [
+            "PISP",
+            "PIISP"
+        ],
+        "organizationName": "Fictional Corporation AG",
+        "organizationUnit": "Information Technology",
+        "domainComponent": "public.corporation.de",
+        "localityName": "Nuremberg",
+        "stateOrProvinceName": "Bayern",
+        "countryCode": "CM",
+        "validity": 265,
+        "commonName": "Fake NCA My project",
+        "ocspCheckNeeded": false
+    }
+]
+
