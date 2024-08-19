@@ -109,7 +109,7 @@ public class CertificateServiceImpl implements CertificateService {
     };
 
 
-    private void saveCertificateAsPem(String targetFolder, String certificate, String pemFileName, String tppUnit) throws IOException {
+    void saveCertificateAsPem(String targetFolder, String certificate, String pemFileName, String tppUnit) throws IOException {
         StringBuilder tppFolder = new StringBuilder(targetFolder);
         Path targetPath;
         if (targetFolder.endsWith("/")) {
@@ -231,7 +231,7 @@ public class CertificateServiceImpl implements CertificateService {
         return Optional.of(tppJsonFilePath);
     };
 
-    private <T> Optional<T> handleFile(
+    <T> Optional<T> handleFile(
             Supplier<List<InputStream>> inputStreamSuppliers,
             Function<List<InputStream>, List<CertificateRequest>> jsonParsers,
             Function<List<CertificateRequest>, List<CertificateResponse>> certGenerator,
