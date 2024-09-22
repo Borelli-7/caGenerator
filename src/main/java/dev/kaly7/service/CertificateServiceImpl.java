@@ -40,6 +40,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.function.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
@@ -189,7 +190,7 @@ public class CertificateServiceImpl implements CertificateService {
     private final Function<List<CertificateRequest>, List<String>> getAuthorizationNumbers = (requests) ->
             requests.stream()
                     .map(CertificateRequest::authorizationNumber)
-                    .toList();
+                    .collect(Collectors.toList());
 
     /**
      * Generates PEM files for certificates based on the provided JSON file and saves them to the specified target folder.
@@ -464,7 +465,7 @@ public class CertificateServiceImpl implements CertificateService {
                             ExportUtil.exportToString().apply(subjectData.privateKey())
                     );
                 })
-                .toList();
+                .collect(Collectors.toList());
 
 
     private ContentSigner createContentSigner(IssuerData issuerData) throws OperatorCreationException {
