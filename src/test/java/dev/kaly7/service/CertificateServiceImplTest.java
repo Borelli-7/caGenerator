@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
@@ -74,14 +73,10 @@ class CertificateServiceImplTest {
         // Execute the method under test
         certificateService.generatePemFilesCerts(tppJsonFilePath, targetFolder);
 
-        // Verify int/home/kaly-7/Dev/Projects/myProjects/eractions
         //verify(validateInputsMock).apply(tppJsonFilePath, targetFolder);
         verify(getInputStreamsMock).apply(tppJsonFilePath);
         verify(parseJsonFileMock).apply(any());
         verify(generateCertificateMock).apply(any());
-
-        // Ensure that logging and saving of files is done
-        // (You could use ArgumentCaptor to verify the exact logging and saving behavior)
     }
 
     @Test
