@@ -8,41 +8,77 @@ Certificate generator is a standalone application able to generate PSD2 complian
   example: `Tpp.json`
   This will create a valid certificate.
 ```json
-{
-"authorizationNumber": "PSDDE-FAKENCA-87B2AC",
-"roles": [
-"PISP", "AISP"
-],
-"organizationName": "Fictional Corporation AG",
-"organizationUnit": "Information Technology",
-"domainComponent": "public.corporation.de",
-"localityName": "Nuremberg",
-"stateOrProvinceName": "Bayern",
-"countryCode": "DE",
-"validity": 365,
-"commonName": "Fake NCA",
-"ocspCheckNeeded": false
-}
+[
+    {
+        "authorizationNumber": "PSDAT-FAKENCA-87B2AC1",
+        "roles": [
+            "PISP"
+        ],
+        "organizationName": "Fictional Corporation AG",
+        "organizationUnit": "Information Technology",
+        "domainComponent": "public.corporation.de",
+        "localityName": "Nuremberg",
+        "stateOrProvinceName": "Bayern",
+        "countryCode": "AT",
+        "validity": 165,
+        "commonName": "Fake NCA My project",
+        "ocspCheckNeeded": false
+    },
+    {
+        "authorizationNumber": "PSDAT-FAKENCA-87B2AC4",
+        "roles": [
+            "PISP",
+            "PIISP"
+        ],
+        "organizationName": "Fictional Corporation AG",
+        "organizationUnit": "Information Technology",
+        "domainComponent": "public.corporation.de",
+        "localityName": "Nuremberg",
+        "stateOrProvinceName": "Bayern",
+        "countryCode": "CM",
+        "validity": 265,
+        "commonName": "Fake NCA My project",
+        "ocspCheckNeeded": false
+    }
+]
 ```
 To create an expired certificate, set the validity in the `Tpp.json` to a negative number:
 
 Example:
 ```
-{
-"authorizationNumber": "PSDDE-FAKENCA-87B2AC",
-"roles": [
-"PISP", "AISP"
-],
-"organizationName": "Fictional Corporation AG",
-"organizationUnit": "Information Technology",
-"domainComponent": "public.corporation.de",
-"localityName": "Nuremberg",
-"stateOrProvinceName": "Bayern",
-"countryCode": "DE",
-"validity": -365, //Set this value to any negative number
-"commonName": "Fake NCA",
-"ocspCheckNeeded": false
-}
+[
+    {
+        "authorizationNumber": "PSDAT-FAKENCA-87B2AC1",
+        "roles": [
+            "PISP"
+        ],
+        "organizationName": "Fictional Corporation AG",
+        "organizationUnit": "Information Technology",
+        "domainComponent": "public.corporation.de",
+        "localityName": "Nuremberg",
+        "stateOrProvinceName": "Bayern",
+        "countryCode": "AT",
+        "validity": -165,
+        "commonName": "Fake NCA My project",
+        "ocspCheckNeeded": false
+    },
+    {
+        "authorizationNumber": "PSDAT-FAKENCA-87B2AC4",
+        "roles": [
+            "PISP",
+            "PIISP"
+        ],
+        "organizationName": "Fictional Corporation AG",
+        "organizationUnit": "Information Technology",
+        "domainComponent": "public.corporation.de",
+        "localityName": "Nuremberg",
+        "stateOrProvinceName": "Bayern",
+        "countryCode": "CM",
+        "validity": -5,
+        "commonName": "Fake NCA My project",
+        "ocspCheckNeeded": false
+    }
+]
 ```
 
 ### How to use and run a library in other project

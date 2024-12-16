@@ -7,3 +7,4 @@ For upcoming versions see our [Roadmap](Roadmap.md).
 ### Mainline
 
 - release_notes/Release_notes_1.0.md [Version 1.0 (release date: 13.08.2024)](../release_notes/Release_notes_1.0.md)
+- release_notes/Release_notes_1.1.md [Version 1.1 (release date: dd.mm.yyyy)](../release_notes/Release_notes_1.1.md)
