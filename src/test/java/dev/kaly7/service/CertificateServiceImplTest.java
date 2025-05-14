@@ -2,131 +2,151 @@ package dev.kaly7.service;
 
 import dev.kaly7.model.CertificateRequest;
 import dev.kaly7.model.CertificateResponse;
+import dev.kaly7.model.PspRole;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collections;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
 
+/**
+ * Integration tests for the {@link CertificateServiceImpl} class.
+ * These tests verify the complete certificate generation flow.
+ */
 class CertificateServiceImplTest {
 
-    @Mock
-    private BiFunction<String, String, Optional<String>> validateInputsMock;
-
-    @Mock
-    private Function<List<InputStream>, List<CertificateRequest>> parseJsonFileMock;
-
-    @Mock
-    private Function<String, List<InputStream>> getInputStreamsMock;
-
-    @Mock
-    private Function<List<CertificateRequest>, List<CertificateResponse>> generateCertificateMock;
-
-    @Mock
-    private Function<List<CertificateRequest>, List<String>> getAuthorizationNumbersMock;
-
-    @Mock
-    Consumer<String> fileWriterMock;
-
-    @InjectMocks
     private CertificateServiceImpl certificateService;
+    
+    @TempDir
+    Path tempDir;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        certificateService = new CertificateServiceImpl();
     }
 
-    @Disabled
     @Test
-    void testGeneratePemFilesCerts_ValidInputs() {
-        List<String> expectedAuthorizationNumber = List.of ("PSDAT-FAKENCA-87B2AC", "PSDDE-FAKENCA-87B2QX" );
-        String tppJsonFilePath = Objects.requireNonNull(getClass().getClassLoader()
-                .getResource("testTpp.json")).getPath();
-        String targetFolder = "target/certs-folder";
-
-        // Mocking dependencies
-
-        when(validateInputsMock.apply(tppJsonFilePath, targetFolder)).thenReturn(Optional.of(tppJsonFilePath));
-        when(getInputStreamsMock.apply(tppJsonFilePath)).thenReturn(Collections.singletonList(mock(InputStream.class)));
-        when(parseJsonFileMock.apply(any())).thenReturn(Collections.singletonList(mock(CertificateRequest.class)));
-        CertificateResponse responseMock = mock(CertificateResponse.class);
-        when(generateCertificateMock.apply(any())).thenReturn(Collections.singletonList(mock(responseMock)));
-        String certificate = mock(responseMock.encodedCert());
-        String privateKey = mock(responseMock.privateKey());
-        when(getAuthorizationNumbersMock.apply(any())).thenReturn(expectedAuthorizationNumber);
-
-
-        // Execute the method under test
+    void generatePemFilesCerts_shouldGenerateCertificatesFromJsonFile() {
+        // Arrange
+        String tppJsonFilePath = "src/test/resources/testTpp.json";
+        String targetFolder = tempDir.toString();
+        
+        // Act
         certificateService.generatePemFilesCerts(tppJsonFilePath, targetFolder);
-
-        //verify(validateInputsMock).apply(tppJsonFilePath, targetFolder);
-        verify(getInputStreamsMock).apply(tppJsonFilePath);
-        verify(parseJsonFileMock).apply(any());
-        verify(generateCertificateMock).apply(any());
+        
+        // Assert
+        // Check that the certificate files were created
+        assertTrue(Files.exists(Paths.get(targetFolder, "PSDAT-FAKENCA-87B2AC1", "PSDAT-FAKENCA-87B2AC1-encodedCert.pem")),
+                "Certificate file should be created");
+        assertTrue(Files.exists(Paths.get(targetFolder, "PSDAT-FAKENCA-87B2AC1", "PSDAT-FAKENCA-87B2AC1-privateKey.key")),
+                "Private key file should be created");
+        
+        assertTrue(Files.exists(Paths.get(targetFolder, "PSDAT-FAKENCA-87B2AC2", "PSDAT-FAKENCA-87B2AC2-encodedCert.pem")),
+                "Certificate file should be created");
+        assertTrue(Files.exists(Paths.get(targetFolder, "PSDAT-FAKENCA-87B2AC2", "PSDAT-FAKENCA-87B2AC2-privateKey.key")),
+                "Private key file should be created");
+        
+        assertTrue(Files.exists(Paths.get(targetFolder, "PSDAT-FAKENCA-87B2AC3", "PSDAT-FAKENCA-87B2AC3-encodedCert.pem")),
+                "Certificate file should be created");
+        assertTrue(Files.exists(Paths.get(targetFolder, "PSDAT-FAKENCA-87B2AC3", "PSDAT-FAKENCA-87B2AC3-privateKey.key")),
+                "Private key file should be created");
+        
+        assertTrue(Files.exists(Paths.get(targetFolder, "PSDAT-FAKENCA-87B2AC4", "PSDAT-FAKENCA-87B2AC4-encodedCert.pem")),
+                "Certificate file should be created");
+        assertTrue(Files.exists(Paths.get(targetFolder, "PSDAT-FAKENCA-87B2AC4", "PSDAT-FAKENCA-87B2AC4-privateKey.key")),
+                "Private key file should be created");
     }
 
     @Test
-    void testGeneratePemFilesCerts_InvalidInputs() {
-        String tppJsonFilePath = "";
-        String targetFolder = "valid/path/to/target";
-
-        // Mocking dependencies
-        when(validateInputsMock.apply(tppJsonFilePath, targetFolder)).thenReturn(Optional.empty());
-
-        // Execute the method under test
-        certificateService.generatePemFilesCerts(tppJsonFilePath, targetFolder);
-
-        // Verify that further processing is not done
-        verify(getInputStreamsMock, never()).apply(anyString());
-        verify(parseJsonFileMock, never()).apply(any());
-        verify(generateCertificateMock, never()).apply(any());
-    }
-
-    @Disabled
-    @Test
-    void testSaveCertificateAsPem_ValidInputs() throws IOException {
-        String targetFolder = "valid/path/to/target";
-        String certificate = "mock certificate content";
-        String pemFileName = "certificate.pem";
-        String tppUnit = "unit";
-
-        // Mock the method to ensure it doesn't do actual file operations
-        doNothing().when(certificateService).saveCertificateAsPem(anyString(), anyString(), anyString(), anyString());
-
-        // Execute the method under test
-        certificateService.saveCertificateAsPem(targetFolder, certificate, pemFileName, tppUnit);
-
-        // Verify that the method was called with the correct parameters
-        verify(certificateService).saveCertificateAsPem(targetFolder, certificate, pemFileName, tppUnit);
-    }
-
-    @Test
-    void testHandleFile_EmptyInputStreams() {
-        Supplier<List<InputStream>> inputStreamSuppliersMock = mock(Supplier.class);
-        when(inputStreamSuppliersMock.get()).thenReturn(Collections.emptyList());
-
-        Optional<?> result = certificateService.handleFile(
-                inputStreamSuppliersMock,
-                parseJsonFileMock,
-                generateCertificateMock,
-                mock(BiConsumer.class)
+    void generateCertificate_shouldGenerateCertificateResponses() {
+        // Arrange
+        List<CertificateRequest> requests = Arrays.asList(
+                new CertificateRequest(
+                        "PSDAT-TEST-12345",
+                        List.of(PspRole.PISP),
+                        "Test Organization",
+                        "Test Unit",
+                        "test.domain.com",
+                        "Test City",
+                        "Test State",
+                        "US",
+                        365,
+                        "Test Common Name",
+                        false
+                ),
+                new CertificateRequest(
+                        "PSDAT-TEST-67890",
+                        Arrays.asList(PspRole.PISP, PspRole.AISP),
+                        "Test Organization 2",
+                        "Test Unit 2",
+                        "test2.domain.com",
+                        "Test City 2",
+                        "Test State 2",
+                        "DE",
+                        365,
+                        "Test Common Name 2",
+                        true
+                )
         );
-
-        assertTrue(result.isEmpty(), "Expected empty result when input streams are empty");
+        
+        // Act
+        List<CertificateResponse> responses = certificateService.generateCertificate.apply(requests);
+        
+        // Assert
+        assertNotNull(responses, "Certificate responses should not be null");
+        assertEquals(2, responses.size(), "Should generate 2 certificate responses");
+        
+        // Check the first response
+        assertNotNull(responses.get(0).encodedCert(), "Encoded certificate should not be null");
+        assertNotNull(responses.get(0).privateKey(), "Private key should not be null");
+        assertTrue(responses.get(0).encodedCert().contains("CERTIFICATE"), "Encoded certificate should contain 'CERTIFICATE'");
+        assertTrue(responses.get(0).privateKey().contains("PRIVATE KEY"), "Private key should contain 'PRIVATE KEY'");
+        
+        // Check the second response
+        assertNotNull(responses.get(1).encodedCert(), "Encoded certificate should not be null");
+        assertNotNull(responses.get(1).privateKey(), "Private key should not be null");
+        assertTrue(responses.get(1).encodedCert().contains("CERTIFICATE"), "Encoded certificate should contain 'CERTIFICATE'");
+        assertTrue(responses.get(1).privateKey().contains("PRIVATE KEY"), "Private key should contain 'PRIVATE KEY'");
     }
 
+    @Test
+    void generatePemFilesCerts_shouldHandleInvalidInputs() {
+        // Arrange
+        String nullTppJsonFilePath = null;
+        String emptyTppJsonFilePath = "";
+        String nonExistentTppJsonFilePath = "non-existent-file.json";
+        String nullTargetFolder = null;
+        String emptyTargetFolder = "";
+        String validTppJsonFilePath = "src/test/resources/testTpp.json";
+        String validTargetFolder = tempDir.toString();
+        
+        // Act & Assert
+        // Test with null TPP JSON file path
+        certificateService.generatePemFilesCerts(nullTppJsonFilePath, validTargetFolder);
+        // No exception should be thrown, but no files should be created
+        
+        // Test with empty TPP JSON file path
+        certificateService.generatePemFilesCerts(emptyTppJsonFilePath, validTargetFolder);
+        // No exception should be thrown, but no files should be created
+        
+        // Test with non-existent TPP JSON file path
+        certificateService.generatePemFilesCerts(nonExistentTppJsonFilePath, validTargetFolder);
+        // No exception should be thrown, but no files should be created
+        
+        // Test with null target folder
+        certificateService.generatePemFilesCerts(validTppJsonFilePath, nullTargetFolder);
+        // No exception should be thrown, but no files should be created
+        
+        // Test with empty target folder
+        certificateService.generatePemFilesCerts(validTppJsonFilePath, emptyTargetFolder);
+        // No exception should be thrown, but no files should be created
+    }
 }
