@@ -57,8 +57,12 @@ public class KeysProvider {
      * {@link CertificateGeneratorException} is thrown.
      */
     public Supplier<PrivateKey> loadPrivateKey = () -> {
-        try (InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(issuerPrivateKey);
-             BufferedReader br = new BufferedReader(new InputStreamReader(stream));
+        InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(issuerPrivateKey);
+        if (stream == null) {
+            throw new CertificateGeneratorException("Private key file not found: " + issuerPrivateKey);
+        }
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(stream));
              PEMParser pp = new PEMParser(br)) {
 
             // Add BouncyCastle provider for PEM parsing
@@ -91,8 +95,14 @@ public class KeysProvider {
      * encapsulating the certificate loading logic in a functional interface.
      */
     public Supplier<X509Certificate> loadCertificate = () -> {
-        try (InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(issuerCertificate)) {
+        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(issuerCertificate);
+        if (is == null) {
+            throw new CertificateGeneratorException("Certificate file not found: " + issuerCertificate);
+        }
+
+        try {
             byte[] bytes = IOUtils.toByteArray(is);
+            is.close();
             return X509CertUtils.parse(bytes);
         } catch (IOException ex) {
             throw new CertificateGeneratorException("Could not read certificate from classpath", ex);

@@ -86,8 +86,19 @@ public class CertificateServiceImpl implements CertificateService {
 
     Function<String, List<InputStream>> getInputStreams = (tppJsonFilePath) -> {
         List<InputStream> inputStreams = new ArrayList<>();
+        if (tppJsonFilePath == null || tppJsonFilePath.isEmpty()) {
+            logger.error("TPP JSON file path is null or empty.");
+            return inputStreams;
+        }
+
         Path path = Paths.get(tppJsonFilePath);
         try {
+            // Check if file exists
+            if (!Files.exists(path)) {
+                logger.error("TPP JSON file not found: {}", tppJsonFilePath);
+                return inputStreams;
+            }
+
             // Read the JSON file
             String jsonContent = new String(Files.readAllBytes(path));
 
@@ -104,7 +115,8 @@ public class CertificateServiceImpl implements CertificateService {
             }
 
         } catch (IOException e) {
-            throw new RuntimeException("Json File not found or unable to read: " + tppJsonFilePath, e);
+            logger.error("Error reading TPP JSON file: {}", tppJsonFilePath, e);
+            // Return empty list instead of throwing exception
         }
         return inputStreams;
     };
